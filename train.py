@@ -21,7 +21,7 @@ class Model():
         self.pretrained_model = pretrained_model
         self.model = self.pretrained_model
     
-    def train(self, moves):
+    def train(self, moves, epochs=100):
         # Make x, y sets
         x = np.array([move[0] for move in moves])
         y = np.array([move[1] for move in moves])
@@ -42,7 +42,7 @@ class Model():
         
         # Train a model
         if self.model == None:
-            model = keras.Sequential(
+            self.model = keras.Sequential(
                 layers=[
                     tf.keras.layers.Flatten(input_shape=x_train[0].shape),
                     tf.keras.layers.Dense(units=128, activation='relu'),
@@ -50,15 +50,15 @@ class Model():
                     tf.keras.layers.Dense(units=6, activation='softmax')
                 ]
             )
-            model.compile(
+            self.model.compile(
                 loss='mean_squared_error',
                 optimizer='adam'
             )
-        model.fit(
+        self.model.fit(
             x=x_train,
             y=y_train,
             batch_size=32,
-            epochs=100,
+            epochs=epochs,
             validation_data=(x_validation, y_validation)
         )
         return self.model

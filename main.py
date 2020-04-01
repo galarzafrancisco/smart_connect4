@@ -33,7 +33,10 @@ while True:
     # Train
     print('Training new generation...')
     new_model = Model()
-    new_trained_model = new_model.train(winner_moves)
+    new_trained_model = new_model.train(
+        moves=winner_moves,
+        epochs=100
+    )
     new_model.save('models/model_{}.h5'.format(current_generation + 1))
     # Write metadata
     print('Training finished. Writing metadata...')
