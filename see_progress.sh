@@ -4,5 +4,5 @@ source env/bin/activate
 
 while true; do
     python play_against_the_machine.py
-    sleep 10
+    sleep 4
     done

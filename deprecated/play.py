@@ -136,6 +136,7 @@ class Game():
         self.iterations = []
         self.winner_iterations = []
         self.winner = None
+        self.q_moves = 0
     
     def start(self):
         while self.board.has_won() == False and self.board.can_play() == True:
@@ -149,6 +150,7 @@ class Game():
             self.iterations.append((this_player.name, np.array(self.board.state, copy=True), choice)) # (player, board state, move)
             # Play
             self.board.play(this_player.name, choice)
+            self.q_moves += 1
             if self.board.has_won():
                 this_player.get_points(1)
 
@@ -174,7 +176,10 @@ class Game():
                 iteration[1][winner_index] = 1.0
                 iteration[1][loser_index] = 0.5
                 self.winner_iterations.append(iteration)
-        return self.winner_iterations
+        return {
+            'q_moves': self.q_moves,
+            'moves': self.winner_iterations
+        }
 
 
 
@@ -195,12 +200,19 @@ class Simulation():
         
     def start(self):
         for i in range(self.loops):
-            game = Game(self.players)
-            game.start()
-            for winner_move in game.get_winner_moves():
-                self.winner_moves.append([winner_move[1], winner_move[2]])
+            print('\tPlaying game {} of {}'.format(i, self.loops))
+            try:
+                game = Game(self.players)
+                game.start()
+                for winner_move in game.get_winner_moves():
+                    self.winner_moves.append([winner_move[1], winner_move[2]])
+            except Exception as e:
+                print('Error in game {}'.format(i))
+                print(e)
     
-    def get_winner_moves(self):
+    def get_winner_moves(self, best=True):
+        if best:
+            np.array([int(m['q_moves']) for m in self.winner_moves])
         return self.winner_moves
 
     def save_winner_moves_as_csv(self, file_path):

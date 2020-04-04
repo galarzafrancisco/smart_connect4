@@ -1,57 +1,64 @@
-import json, time, os
-import numpy as np
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras.models import load_model
-from play import Player, Board, Game
-from train import Model, Agent
+from modules.Agent import Agent
+from modules.Game import Game
+import json
 
 # Read metadata
 with open('metadata.json', 'r') as f:
     metadata = json.load(f)
 latest_generation_trained = metadata['latest_generation_trained']
 
-# Load model
-model1 = load_model('models/model_{}.h5'.format(latest_generation_trained - 1))
-model2 = load_model('models/model_{}.h5'.format(latest_generation_trained))
+def calculate_randomness(generation):
+    if generation < 10:
+        return 0.8, 0.2
+    elif generation < 20:
+        return 0.75, 0.25
+    elif generation < 30:
+        return 0.7, 0.3
+    elif generation < 40:
+        return 0.6, 0.4
+    elif generation < 50:
+        return 0.5, 0.4
+    elif generation < 60:
+        return 0.4, 0.4
+    elif generation < 70:
+        return 0.35, 0.35
+    elif generation < 80:
+        return 0.35, 0.3
+    elif generation < 90:
+        return 0.3, 0.3
+    elif generation < 100:
+        return 0.3, 0.25
+    else:
+        return 0.3, 0.2
+        
+randomness, probablilistic = calculate_randomness(latest_generation_trained)
 
-agent1 = Agent(model1).agent
-agent2 = Agent(model2).agent
-p1 = Player(
-    name=1.0,
-    agent=agent1,
-    exploration=0,
-    version=latest_generation_trained-1
+# Make players
+agent_1 = Agent( # current gen
+    player_id=1,
+    player_colour='white',
+    model='models/model_{}.h5'.format(latest_generation_trained) if latest_generation_trained > 1 else None
 )
-p2 = Player(
-    name=2.0,
-    agent=agent2,
-    exploration=0,
-    version=latest_generation_trained
+agent_1.set_randomness_level(randomness)
+agent_1.set_probabilistic_level(probablilistic)
+agent_2 = Agent( # previous gen
+    player_id=2,
+    player_colour='red',
+    model='models/model_{}.h5'.format(latest_generation_trained - 1) if latest_generation_trained > 1 else None
 )
-board = Board()
-players = [p1, p2]
-turn = int(np.trunc(np.random.random() * len(players)))
-while board.has_won() == False and board.can_play() == True:
-    # Select player
-    this_player = players[turn]
-    # Choose a number to play
-    choice = this_player.play(board.state)
-    while board._validate_move(choice) == False:
-        choice = this_player.play(board.state)
-    os.system('clear')
-    print('\nPlayer {} (v{})- Choice: {}'.format(this_player.name, this_player.version, choice))
-    # Play
-    board.play(this_player.name, choice)
-    board.print_board()
-    if board.has_won():
-        this_player.get_points(1)
-        print('\nPlayer {} won'.format(this_player.name))
+agent_2.set_randomness_level(randomness)
+agent_2.set_probabilistic_level(probablilistic)
 
-    # Increase the turn
-    turn += 1
-    if turn >= len(players):
-        turn=0
+players = [agent_1, agent_2]
 
-    time.sleep(1)
-    
+# Make game
+game = Game(
+    players=players,
+    print_board_state=True,
+    print_board_delay=1,
+    clear_screen_before_printing_board=True
+)
+game.start()
+if game.winner:
+    print('Player {} won'.format(game.winner))
+    print('Q moves: {}'.format(game.move_number))
